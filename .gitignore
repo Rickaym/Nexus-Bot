@@ -1,0 +1,11 @@
+.env
+# JUNK FILES
+*.txt
+*.json
+*.log
+*.pyc
+*.db
+*.yaml
+
+# HIDDEN BETA APPLICATIONS
+_*
