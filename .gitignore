@@ -1,3 +1,4 @@
+.dependencies
 .env
 # JUNK FILES
 *.txt
@@ -6,5 +7,3 @@
 *.pyc
 *.db
 *.yaml
-
-# HIDDEN BETA APPLICATIONS
