@@ -1,0 +1,7 @@
+aiosqlite
+discord.py
+pyaml
+python-dotenv
+dnspython
+PyNaCl
+git+https://github.com/Rapptz/discord-ext-menus
