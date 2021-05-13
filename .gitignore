@@ -1,9 +1,9 @@
 Procfile
-\dependencies
-\venv
+dependencies
+venv
+\bot\utils\marketing.py
 .env
 # JUNK FILES
-*.txt
 *.json
 *.log
 *.pyc
