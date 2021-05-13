@@ -1,7 +1,11 @@
+# HEROKU BACKUP HOSTING
 Procfile
+
+# VIRTUAL ENVS AND SENSITIVE DATA
 dependencies
 venv
-\bot\utils\marketing.py
+bot/utils/marketing.py
+
 .env
 # JUNK FILES
 *.json
