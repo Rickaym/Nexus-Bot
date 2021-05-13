@@ -5,15 +5,16 @@ from discord.ext import commands
 
 from bot.constants import Defaults
 from bot.utils.extensions import EXTENSIONS
+from bot.utils.prefixes import get_prefix
 
 intents = Intents.default()
 intents.reactions = True
-intents.members = True
+intents.members = False # WILL BREAK THINGS
 
 # Bot constructor
-bot = commands.Bot(command_prefix=Defaults.PREFIX,
+bot = commands.Bot(command_prefix=get_prefix,
                    intents=intents,
-                   status=Status.offline, activity=Game("One more light, and your life goes night night."))
+                   status=Status.offline, activity=Game("Loading.."))
 
 # On ready event
 bot.remove_command('help')

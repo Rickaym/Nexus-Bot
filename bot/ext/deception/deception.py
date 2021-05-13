@@ -1,28 +1,36 @@
 import random
 import discord
-from discord.activity import Game
+from discord.channel import CategoryChannel
 import yaml
 import logging
 import datetime
 import asyncio
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple, Union
+from discord.activity import Game
 from discord import Member
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
-
+from discord.raw_models import RawReactionActionEvent
 from discord.permissions import PermissionOverwrite
 
-from .Deception.ext import Local_Game_Instance, default_ranks
+from .Deception.ext import LAN_Game_Instance, Player, Rank, WAN_Game_Instance, default_ranks, all_ranks, FACTION_COLORS
+from .Deception import utils
+from bot.utils.checks import is_admin
+
+NUMBER_MAP = {0: ':zero:', 1: ':one:', 2: ':two:', 3: ':three:',
+              4: ':four:', 5: ':five:', 6: ':six:',
+              7: ':seven:', 8: ':eight:', 9: ':nine:'}
 
 """
 TODO:
-   [1]. Ability to use skills in their own channels
-   [2]. Day and night cycle and adding values onto them
+   [1]. Ability to use skills in their own channels         ☑️
+   [2]. Day and night cycle and adding values onto them     ☑️
    [3]. Voting someone out
    [4]. Make decisions on how long for the talking meeting
    [5]. A Will system somehow??
    [6]. Create winning situations etc..
+   [7]. Loading a game out of templates                     ☑️
 """
 
 log = logging.getLogger(__name__)
@@ -54,21 +62,15 @@ TOWNSHIPS = (
     "Wenham"
 )
 
-NUMBER_MAP = {'0': ':zero:', '1': ':one:', '2': ':two:', '3': ':three:',
-              '4': ':four:', '5': ':five:', '6': ':six:',
-              '7': ':seven:', '8': ':eight:', '9': ':nine:'}
-
 
 class Deception(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # Equation for creating a unique identifier
-
         with open('bot/ext/deception/Deception/preset.yaml', 'r') as file:
             self.preset = yaml.load(file, Loader=yaml.SafeLoader)
 
-        self.games: Dict[int, Local_Game_Instance] = {}
+        self.games: Dict[int, LAN_Game_Instance] = {}
 
     def validate_members(self, members: List[Member], author: Member) -> Tuple[Member]:
         """
@@ -88,6 +90,35 @@ class Deception(commands.Cog):
 
         return tuple(members)
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: RawReactionActionEvent):
+        if payload.user_id == self.bot.user.id or payload.emoji.name not in utils.printable_emojis.values():
+            return
+
+        if int(payload.guild_id) not in self.games.keys():
+            return
+
+        log.info(
+            f"Carrying out a skill panel task for guild {payload.guild_id}")
+        game = self.games[int(payload.guild_id)]
+
+        # the reaction is done by one of the people that owns a skill panel
+        if payload.member not in game.info['skill_panel'].keys():
+            return
+
+        message = game.info['skill_panel'][payload.member]
+
+        # apparently the reacting user is reacting to something else
+        if payload.message_id != message.id:
+            return
+
+        actor = utils.get(Player, game, id=payload.user_id)
+        victim = utils.get_options(message.embeds[0].description, game)[
+            payload.emoji.name]
+
+        actor.skill(victim)
+        await game.info['channels'][payload.user_id].send(actor.rank.skill.msg)
+
     @commands.command(name="kill", aliases=("investigate", "sheriff"))
     async def use_skill(self, ctx: Context):
         # Check if there is an ongoing game in the guild
@@ -98,26 +129,26 @@ class Deception(commands.Cog):
 
         # Target game
         game = self.games[ctx.guild.id]
-        print(game.night, game.day)
-        if (p := game.get_player(ctx.author).rank).skill.__name__ == "passive" or game.night != game.day:
+        if (p := game.get_player(ctx.author)).rank.skill.__name__ == "passive" or game.night != game.day:
             return
         possible_targets = {
-            i: m.member.display_name for (i, m) in enumerate(game.all_participants.values())
+            i: m.member for (i, m) in enumerate(game.all_participants.values())
             if m != game.get_player(ctx.author)}
 
-        await ctx.reply(f"Choose your targets from: {''.join(m for m in list(possible_targets.values()))}")
+        await ctx.reply(f"Choose your targets from: {''.join(m.display_name for m in list(possible_targets.values()))}")
         while True:
-            msg = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author and m.channel == ctx.channel and (m.content).isnumeric() and int(m.content)+1 in [m for m in list(possible_targets.keys())])
-            choice = int(msg.content)+1
+            msg = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author and m.channel == ctx.channel and (m.content).isnumeric() and int(m.content)-1 in [m for m in list(possible_targets.keys())])
+            choice = int(msg.content)-1
+
             # Player doesn't have a passive ability or if its day time
             p.skill(game.get_player(possible_targets[choice]))
-            await ctx.reply(p.skill.msg)
+            await ctx.reply(p.rank.skill.msg)
 
     @commands.group(name="deception", aliases=("decep", "d"), invoke_without_command=True)
     async def deception(self, ctx: Context):
-        ...
+        await ctx.reply("oops you can't see this :)", mention_author=False)
 
-    @deception.command(name="start", aliases=("lobby", "join"))
+    @deception.command(name="start", aliases=("lobby", "join", "load"))
     @commands.guild_only()
     async def start_new_lobby(self, ctx: Context, members: Greedy[Member] = None):
         """
@@ -139,10 +170,39 @@ class Deception(commands.Cog):
         if not members:
             # multiplayer protocol
             ...
+            return
+        if ctx.invoked_with == "load" and is_admin(ctx):
+            # Finds category ID at the last place of the args without specifically asking for it
+            category_id = int(ctx.args[-1])
+            log.info(
+                f"Loading a templated local lobby of id ({identifier}) author is {ctx.author.name}#{ctx.author.discriminator} with category id {category_id}"
+            )
+            await self.start_local_lobby(ctx, ranks, participants, identifier, mode="load", load_id=category_id)
         else:
             log.info(
                 f"Starting a new local lobby of id ({identifier}) author is {ctx.author.name}#{ctx.author.discriminator}")
-            await self.start_local_lobby(ctx, ranks, participants, identifier)
+            await self.start_local_lobby(ctx, ranks, participants, identifier, mode="start")
+
+    @deception.command(name="help")
+    async def deception_help(self, ctx: Context, doubt: str):
+        ranks = [r.name.lower() for r in all_ranks]
+        if doubt.lower() in ranks:
+            rank = utils.get(object=Rank, name=doubt, id=doubt)
+            desc = utils.get_info(rank)
+
+            embed = discord.Embed(color=FACTION_COLORS[desc.fac]).set_author(
+                name=f"⦿ {rank.name} - Info board")
+            embed.description = f"```diff\n{desc.tips}\n```"
+
+            embed.add_field(
+                name="Attributes", value=f"Faction - {desc.fac}\n\n🛡️ : {rank.defense}\n⚔️ : {rank.attack}\n✊ : {rank.skill.__name__}")
+            embed.add_field(
+                name=f"📋 About {rank.name}", value=f"{desc.guide}\n\n{desc.guide_long}")
+            embed.set_thumbnail(url=desc.image)
+
+            await ctx.reply(embed=embed)
+        else:
+            ...
 
     async def voting(self, members: Member, game: Game):
         embed = discord.Embed(
@@ -209,19 +269,68 @@ class Deception(commands.Cog):
         elif highest == 1:
             await meeting_ch.send('No one has voted! ')"""
 
-    async def start_local_lobby(self, ctx: Context, ranks: tuple, participants: List[Member], id: int):
+    @staticmethod
+    def make_embed(player: Player):
+        rank = player.rank
+        info = utils.get_info(rank)
+        name = player.member.display_name
+
+        choosable_list = '\n\n'
+        index = 0
+        for other in player.game.all_participants.values():
+            if other != player:
+                choosable_list += f'{NUMBER_MAP[i]} {other.member.display_name}'
+                index += 1
+
+        embed = discord.Embed(colour=FACTION_COLORS[info.fac])
+        embed.description = info.skill_message % name + choosable_list
+        return embed
+
+    async def make_player_channel(self, ctx: Context, game: Union[LAN_Game_Instance, WAN_Game_Instance], member: Member, load: bool):
+        if ctx.guild.owner != member:
+            overwrite = {member: PermissionOverwrite(read_messages=True, send_messages=True),
+                         ctx.guild.default_role: PermissionOverwrite(read_messages=False),
+                         ctx.guild.me: PermissionOverwrite(read_messages=True, send_messages=True)}
+        else:
+            overwrite = {ctx.guild.default_role: PermissionOverwrite(read_messages=False),
+                         ctx.guild.me: PermissionOverwrite(read_messages=True, send_messages=True)}
+
+        if not load:
+            channel = await game.category.create_text_channel(
+                self.preset['names']['member'] % member.display_name, overwrites=overwrite)
+        else:
+            channel = discord.utils.get(
+                game.category.channels, name=self.preset['names']['member'] % member.display_name)
+
+            # make a new channel if it can't be found
+            if not channel:
+                channel = await game.category.create_text_channel(
+                    self.preset['names']['member'] % member.display_name, overwrites=overwrite)
+            else:
+                await channel.edit(overwrites=overwrite)
+
+        player = game.get_player(member)
+        await channel.send(
+            f"You got the role {player.rank.name}.\n\n{utils.get_info(player).guide}")
+        return channel
+
+    async def start_local_lobby(self, ctx: Context, ranks: tuple, participants: List[Member], id: int, mode: Union[str('load'), str('start')], load_id: int = Optional[int]):
         await ctx.reply("Game is starting soon...")
 
         # Build player role
         role = discord.utils.get(
             ctx.guild.roles, name=self.preset['names']['role_name'])
-        # Need to make a new one doesn't exist
-        if not role:
-            role = await ctx.guild.create_role(name=self.preset['names']['role_name'], colour=discord.Colour.random())
 
         # Instantiate local game
-        game = Local_Game_Instance(
+        game = LAN_Game_Instance(
             ctx, participants, ranks, role, id)
+
+        # Declares it as a class variable to handle skill commands separately
+        self.games[ctx.guild.id] = game
+
+        # Make a game role if it doesn't exist
+        if not role:
+            role = await ctx.guild.create_role(name=self.preset['names']['role_name'], colour=discord.Colour.random())
 
         # We allow everyone with the target role to see the channels
         # the bot itself and remove @everyone
@@ -229,60 +338,82 @@ class Deception(commands.Cog):
                            ctx.guild.me: PermissionOverwrite(read_messages=True),
                            ctx.guild.default_role: PermissionOverwrite(read_messages=False)}
 
-        game.category = await ctx.guild.create_category(
-            random.choice(TOWNSHIPS), overwrites=basic_overwrite)
+        if mode == "start":
+            # create game category and inquiry channel
+            game.category = await ctx.guild.create_category(
+                random.choice(TOWNSHIPS), overwrites=basic_overwrite)
 
-        game.inquiry_channel = await game.category.create_text_channel(
-            self.preset['names']['inquiry'], overwrites=basic_overwrite)
+            game.inquiry_channel = await game.category.create_text_channel(
+                self.preset['names']['inquiry'], overwrites=basic_overwrite)
 
-        # Creating a channel for each member
-        positions = {}
-        for member in participants:
-            if ctx.guild.owner != member:
-                overwrite = {member: PermissionOverwrite(read_messages=True, send_messages=True),
-                             ctx.guild.default_role: PermissionOverwrite(read_messages=False),
-                             ctx.guild.me: PermissionOverwrite(read_messages=True, send_messages=True)}
-            else:
-                overwrite = {ctx.guild.default_role: PermissionOverwrite(read_messages=False),
-                             ctx.guild.me: PermissionOverwrite(read_messages=True, send_messages=True)}
+            # Creating a channel for each member
+            positions = {}
+            for member in participants:
+                channel = await self.make_player_channel(ctx, game, member, load=False)
+                await member.add_roles(role)
+                positions[member.id] = channel
+        else:
+            # try to find the category for the game to load
+            game.category = discord.utils.get(ctx.guild.categories, id=load_id)
+            if not game.category:
+                await ctx.reply("Cannot find the category to load the game.")
+                log.info(
+                    f"Failed to find category in ({id}) game of author {ctx.author.name}#{ctx.author.discriminator} with category id {load_id}"
+                )
+                return
 
-            channel = await game.category.create_text_channel(
-                self.preset['names']['member'] % member.display_name, overwrites=overwrite)
-            await member.add_roles(role)
-            await channel.send(
-                f"You got the role {game.get_player(member).rank.name}.\n\n{game.get_player(member).rank.description}")
+            for target in basic_overwrite.keys():
+                await game.category.set_permissions(target, overwrite=basic_overwrite[target])
 
-            positions[member.id] = channel
+            # find the inquiry channel
+            game.inquiry_channel = discord.utils.get(
+                game.category.channels, name=self.preset['names']['inquiry'])
+            # silently ignores failure to find an inquiry channel and proceeds to make a new one
+            if not game.inquiry_channel:
+                log.info(
+                    f"Failed to find inquiry channel in ({id}) game of author {ctx.author.name}#{ctx.author.discriminator}."
+                )
+                game.inquiry_channel = await game.category.create_text_channel(
+                    self.preset['names']['inquiry'], overwrites=basic_overwrite)
+
+            player_channels = [
+                ch for ch in game.category.channels if ch.name != self.preset['names']['inquiry']]
+
+            positions = {}
+            for member in participants:
+                if self.preset['names']['member'] % member.display_name not in player_channels:
+                    channel = await self.make_player_channel(ctx, game, member, load=True)
+                    await member.add_roles(role)
+                    positions[member.id] = channel
 
         # Provides the game class with channel intel
         game.assign_channels(positions)
 
-        # Declares it as a class variable to handle skill commands
-        # separately
-        self.games[ctx.guild.id] = game
         # Game loop starts
         while game.is_ongoing:
             game.day += 1
-            await game.inquiry_channel.send(f"Day {game.day}\n Members = {' ,'.join(user.display_name for user in participants)}")
-            await game.open_inquiry(5)
+            await game.inquiry_channel.send(f"Day {game.day}\n Members = {' ,'.join(user.display_name for user in participants if game.get_player(user).alive)}")
+            # await game.open_inquiry(10)
             await game.inquiry_channel.send("... the sun has set on us. Goodnight sleep tight.")
+            if game.day == 1:
+                skill_panel = await utils.announce(game, self.make_embed)
+                game.info['skill_panel'] = skill_panel
             game.night += 1
             await asyncio.sleep(20)
-            if game.day >= 8:
-                game._is_ongoing = False
-                game.stop()
 
     @commands.command(name="delall")
     @commands.is_owner()
-    @commands.guild_only()
     async def del_all_channels_from_category(self, ctx: Context, id: Greedy[int]):
-        print(id)
         for i in id:
             category = discord.utils.get(ctx.guild.categories, id=int(i))
             for channel in category.channels:
                 await channel.delete()
                 await asyncio.sleep(1)
             await category.delete()
+
+    @commands.command(name="abc")
+    async def abc(self, ctx, *, abc):
+        print(abc)
 
 
 def setup(bot):

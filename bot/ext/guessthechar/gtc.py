@@ -307,7 +307,7 @@ class GuessTheCharacter(commands.Cog):
         embed = discord.Embed(color=discord.Colour.random())
         embed.set_author(
             name="Guess The Character Manual", icon_url="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4d6.png")
-        embed.description = f"Guess what character it is by looking at the images!\n\n__**Command**__\n> `{ctx.prefix}guessthecharacter start <topic> <branch> <members...>`\n\n__**Information**__\n**1.** In a game with default settings, participants will get a duration of 60 seconds to guess the character displayed. \n\n**2.** Faliure to answer will grant you no points. The first person to answer will get the points of `total participants * 7`, which depletes by 7 points as it goes down."
+        embed.description = f"Guess what character it is by looking at the images. You can use `gtc` instead of writing guessthecharacter when using the command! **{ctx.prefix}guessthecharacter themes** to see the playable themes.\n\n__**Command**__\n> `{ctx.prefix}guessthecharacter start <topic> <branch> <members...>`\n\n__**Information**__\n**1.** In a game with default settings, participants will get a duration of 60 seconds to guess the character displayed. \n\n**2.** Faliure to answer will grant you no points. The first person to answer will get the points of `total participants * 7`, which depletes by 7 points as it goes down."
         embed.set_footer(
             text=f"All topics and branches • {ctx.prefix}guessthecharacter themes")
         await ctx.reply(embed=embed, mention_author=False)

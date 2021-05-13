@@ -55,13 +55,13 @@ class Pictionary(commands.Cog):
         > `%spictionary start <rounds> <participants> <optional:drawtime> <optional:guesstime>`
 
        __**Information**__:
-        **:bell: All participants must be active when the game is started.**
+        **1.** All participants must be active when the game is started.
         When the game starts each participant in the game will have a chance to draw and guess.
 
-        **:paintbrush: To draw, you should use MS paint or any simple paint application screenshot it and submit it.**
+        **2.** To draw, you should use MS paint or any simple paint application screenshot it and submit it.
         For more drawing related tips do %shelp drawing. Normally, each person gets 60 seconds to draw and 70 seconds to guess (Support: `%spictionary drawing`)
 
-        **:tomato: Each person gets 60s to draw and 70s to guess.**
+        **3.** Each person gets 60s to draw and 70s to guess.
         You get higher points the faster you get the answer. Note that the scores are built for every game session."""
 
     """ +-------------------------- Pictionary --------------------------+
@@ -367,6 +367,7 @@ class Pictionary(commands.Cog):
         embed.description = Pictionary.__doc__.replace('%s', ctx.prefix)
         embed.set_thumbnail(
             url='https://cdn.pixabay.com/photo/2013/04/01/21/30/book-99131_960_720.png')
+        embed.set_footer(text=f"Do {ctx.prefix}pictionary tutorial for a visual help menu")
         await ctx.reply(embed=embed, mention_author=False)
 
     @pictionary.command()

@@ -29,9 +29,8 @@ class Roulette(commands.Cog):
             title="Roulette",
             color=Color.random(),
         )
-        self.embed.set_author(name="Nexus' Gamble",
+        self.embed.set_author(name="Pictionary' Gamble",
                               icon_url="https://cdn0.iconfinder.com/data/icons/casinos-and-gambling/500/SingleCartoonCasinoAndGamblingYulia_6-512.png")
-        self.embed.set_footer(text="Do g!roulette help for help")
 
     def create_poster(self, number: int, color: str) -> str:
         """
@@ -131,6 +130,7 @@ class Roulette(commands.Cog):
         embed.add_field(
             name="Bet Numbers:", value="> :one: - :three::six:: `35x`\n> Even/Odd: `2x`\n> High/Low: `2x`")
         embed.add_field(name="Result:", value=poster, inline=False)
+        embed.set_footer(text=f"Do {ctx.prefix}roulette help for help")
         await ctx.reply(embed=embed, mention_author=False)
 
     @roulette.command(name="help", aliases=["support"])
@@ -146,10 +146,11 @@ class Roulette(commands.Cog):
         embed.add_field(
             name="Bet Numbers:", value="> :one: - :three::six:: `35x`\n> Even/Odd: `2x`\n> High/Low: `2x`")
         embed.add_field(
-            name="Examples:", value="To start a bet, you have to decide the bet type and the bet.\n\n**`g!roulette red 1000`**\n**`g!roulette 23 1000`**", inline=False)
+            name="Examples:", value=f"To start a bet, you have to decide the bet type and the bet.\n\n**`{ctx.prefix}roulette red 1000`**\n**`{ctx.prefix}roulette 23 1000`**", inline=False)
         embed.set_footer(
-            text="Do g!roulette <bet_type> <bet> to start betting")
-        embed.set_thumbnail(url=ROULETTE_BOARD)
+            text=f"Do {ctx.prefix}roulette <bet_type> to start playing")
+
+        #embed.set_thumbnail(url=ROULETTE_BOARD)
         await ctx.reply(embed=embed, mention_author=False)
 
 

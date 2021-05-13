@@ -22,7 +22,7 @@ class DeathRoll(commands.Cog):
             color=discord.Color.random(),
         )
 
-        self.embed.set_author(name="Nexus' Gamble",
+        self.embed.set_author(name="Pictionary' Gamble",
                               icon_url="https://cdn0.iconfinder.com/data/icons/casinos-and-gambling/500/SingleCartoonCasinoAndGamblingYulia_6-512.png")
         self.embed.set_footer(
             text=f"To get support • {bot.command_prefix}help deathroll")
@@ -89,7 +89,7 @@ class DeathRoll(commands.Cog):
             return
 
         REST_TIME = 0.6
-        msg = await ctx.reply(f"{member.display_name} please react to this message with 🤝 to accept the challenge.")
+        msg = await ctx.reply(f"{member.display_name} please react to this message with 🤝 to accept the challenge.", mention_author=False)
         await msg.add_reaction('🤝')
         try:
             await self.bot.wait_for('reaction_add', timeout=60.0, check=lambda reaction, user: user == member and str(reaction.emoji) == '🤝')
@@ -101,7 +101,7 @@ class DeathRoll(commands.Cog):
         p2_num = START_NUM
 
         embed = self.embed.copy()
-        embed.description = f"**🍯 BETA-Coming soon™️**\n\n> The first person to reach 1 wins, let's get it going!!!"
+        embed.description = f"**🍯 BETA-Coming soon™️**\n\n> The first person to reach 1 wins, let's get it goin~!!"
         embed.add_field(name=ctx.author.display_name,
                         value=self.convert_to_emoji(p1_num))
         embed.add_field(name=member.display_name,
@@ -109,7 +109,7 @@ class DeathRoll(commands.Cog):
         msg = await ctx.reply(embed=embed, mention_author=False)
         await asyncio.sleep(1)
 
-        embed.description = f"**🍯 BETA-Coming soon™️**\n\n <:slowmode:835921659068022814> **`Let's start the rollinggggggggg!`**"
+        embed.description = f"**🍯 BETA-Coming soon™️**\n\n <:slowmode:835921659068022814> **`Let's start the rollingggggggg~`**"
         embed.set_field_at(
             0, name=ctx.author.display_name + 'insert', value=''.join([DICER_ROLL_EMOJI for i in range(6)]))
         embed.set_field_at(

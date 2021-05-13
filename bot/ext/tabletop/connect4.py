@@ -35,6 +35,8 @@ class ConnectFour(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if not message.guild:
+            return
         if message.guild.id not in self.jobs.keys():
             return
         if message.channel.id not in [values[0] for values in self.jobs.values()]:
@@ -140,7 +142,7 @@ class ConnectFour(commands.Cog):
 
     async def update_board(self, guild_id: int, turn: str) -> discord.Message:
         """
-        Gets the latest updates of the game and update the 
+        Gets the latest updates of the game and update the
         embed of the game.
         """
         message = self.jobs[guild_id][3]
@@ -154,8 +156,8 @@ class ConnectFour(commands.Cog):
         """
         Extracts the x and y position from the content of the message that was sent.
 
-        A numeric horizontal index is acquired by mapping the value onto a 
-        dictionary. 
+        A numeric horizontal index is acquired by mapping the value onto a
+        dictionary.
         """
         if len(content) != 2:
             return (None, None)

@@ -76,7 +76,14 @@ class ExceptionHandler(commands.Cog):
                           description=f"Incorrect details passed in.", color=self.error_color)
             embed.set_footer(text=self.get_usage(ctx))
             await ctx.send(embed=embed)
-
+        elif cog.qualified_name in ('Pictionary, GuessTheCharacter, Deception'):
+            if isinstance(error, commands.BotMissingPermissions):
+                embed = Embed(title='⚠️ Permission needed!', description=f"Due to the latest update on the new multi-answering system. The bot now requires the `manage_messages` permission. Find out more [here](https://github.com/Ricky-MY/The-Pictionary-Bot/blob/main/src/game_files/pictionary.py).", color=self.error_color )
+                embed.add_field(name="Why?", value="The new rewarding system allows multiple people to score points according to how fast they answer. The bot is required to delete valid answers so that when one person gets the correct theme. It remains unexposed.")
+                embed.add_field(name="How?", value=f"• Create a new role named `Pictionary`\n• Give the role access to the `manage_messages` permission\n• Give {self.bot.user.mention} the role!",inline= True)
+                embed.set_image(url = 'https://i.gyazo.com/98f79a36e4145705917434c6942f7a99.png')
+                embed.set_footer(text=f'{ctx.prefix}updates | to find out about latest updates (currently getting revamped -- might not work)')
+                await ctx.send(embed=embed)
         elif cog.qualified_name == 'Admin':
             if isinstance(error, commands.ExtensionNotFound):
                 await ctx.send("⚠️ Extension is not found.")

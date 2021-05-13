@@ -20,13 +20,13 @@ class DiceRoll(commands.Cog):
             title="Roll",
             color=discord.Colour.random(),
         )
-        self.embed.set_author(name="Nexus' Gamble",
+        self.embed.set_author(name="Pictionary' Gamble",
                               icon_url="https://cdn0.iconfinder.com/data/icons/casinos-and-gambling/500/SingleCartoonCasinoAndGamblingYulia_6-512.png")
         self.embed.set_thumbnail(
             url="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f3b0.png"
         )
         self.embed.set_footer(
-            text="Type g!wallet to check how much gold you have.")
+            text="Type ~wallet to check how much gold you have.")
 
     async def update_embed(self, id, turn: str, message: str, value: str):
         """
@@ -71,7 +71,7 @@ class DiceRoll(commands.Cog):
         if member == ctx.author:
             return
 
-        msg = await ctx.reply(f"{member.display_name} please react to this message with 🤝 to accept the challenge.")
+        msg = await ctx.reply(f"{member.display_name} please react to this message with 🤝 to accept the challenge.", mention_author=False)
         await msg.add_reaction('🤝')
         try:
             await self.bot.wait_for('reaction_add', timeout=60.0, check=lambda reaction, user: user == member and str(reaction.emoji) == '🤝')

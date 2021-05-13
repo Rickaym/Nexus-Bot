@@ -1,7 +1,7 @@
 if False:
     from Deception.dummy import Member
     from Deception.ext import Local_Game_Instance,  default_ranks
-    from Deception.ext import Player
+    from Deception.utils import get_info
 
     import random
 
@@ -11,6 +11,5 @@ if False:
         0x0, [p1, p2], default_ranks, 12344)
 
     player = a.get_player(p1)
-    abc = player.rank.skill(player, a.get_player(p2))
-
-    print(player.rank.skill.msg, player.rank, a.get_player(p2).rank)
+    abc = player.skill(player, a.get_player(p2))
+    print(get_info(a.get_player(p1)).guide)

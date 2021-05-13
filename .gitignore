@@ -1,4 +1,5 @@
 \dependencies
+\venv
 .env
 # JUNK FILES
 *.txt

@@ -98,11 +98,11 @@ class Leaderboards(commands.Cog):
         elif not values:
             embed = discord.Embed(
                 title='__**# DAILY LEADERBOARDS**__', color=self.color)
-            embed.description = f"Commands : `{prefix}start normal <rounds> <participants>`"
+            embed.description = f"Commands : `{prefix}pictionary start <rounds> <participants>`"
             embed.set_image(
                 url="https://cdn.discordapp.com/attachments/806122193301274634/812964996446945280/trohpy.png")
-            embed.add_field(name="LEADERBOARDS NOW ENBABLED!",
-                            value="Go now and participate in the daily leaderboards by winning some pictionary games! The leaderboard updates every 2 hours. Everyone can see this leaderboard!")
+            embed.add_field(name="LEADERBOARDS ARE CURRENTLY DISABLED!",
+                            value="Go now and participate in the daily leaderboards by winning some pictionary games once it is enabled! The leaderboard updates every 2 hours. Everyone can see this leaderboard!")
             await ctx.send(embed=embed)
 
     ''' Fetches data from the all time boards table and
@@ -140,11 +140,11 @@ class Leaderboards(commands.Cog):
         elif not values:
             embed = discord.Embed(
                 title='__**# ALL-TIMES LEADERBOARDS**__', color=self.color)
-            embed.description = f"Commands : `{prefix}start normal <rounds> <participants>`"
+            embed.description = f"Commands : `{prefix}pictionary start <rounds> <participants>`"
             embed.set_image(
                 url="https://cdn.discordapp.com/attachments/806122193301274634/812964996446945280/trohpy.png")
-            embed.add_field(name="LEADERBOARDS NOW ENBABLED!",
-                            value="Go now and participate in the ALL-TIMES leaderboards by winning some pictionary games! The leaderboard updates every 24 hours. Everyone can see this leaderboard!")
+            embed.add_field(name="LEADERBOARDS ARE CURRENTLY DISABLED!",
+                            value="Go now and participate in the ALL-TIMES leaderboards by winning some pictionary games once it is enabled! The leaderboard updates every 24 hours. Everyone can see this leaderboard!")
             await ctx.send(embed=embed)
 
 
