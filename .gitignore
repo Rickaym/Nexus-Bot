@@ -4,6 +4,7 @@ Procfile
 # VIRTUAL ENVS AND SENSITIVE DATA
 dependencies
 venv
+bot/logs
 bot/utils/marketing.py
 
 .env
