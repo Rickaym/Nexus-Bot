@@ -1,5 +1,4 @@
 # Nexus-Bot
----
 
 **[Invite Me](https://top.gg/bot/768442873561481216)** | **[Support Server](https://discord.gg/UmnzdPgn6g)**
 
