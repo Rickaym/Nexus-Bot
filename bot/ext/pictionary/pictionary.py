@@ -5,6 +5,7 @@ import random
 from json import load
 from datetime import datetime
 from discord.ext import commands, tasks
+from discord.ext.commands.core import Command
 
 from bot.constants import Colour
 from bot.utils.checks import is_admin
@@ -51,18 +52,17 @@ class PictionaryTutorial(menus.Menu):
 
 
 class Pictionary(commands.Cog):
-    """__**Command**__:
-        > `%spictionary start <rounds> <participants> <optional:drawtime> <optional:guesstime>`
+    """
+           __**Information**__:
+```md
+1. All participants must be active when the game is started.
+When the game starts each participant in the game will have a chance to draw and guess.
 
-       __**Information**__:
-        **1.** All participants must be active when the game is started.
-        When the game starts each participant in the game will have a chance to draw and guess.
+2. To draw, you should use MS paint or any simple paint application screenshot it and submit it.
+For more drawing related tips do %prefixhelp drawing. Normally, each person gets 60 seconds to draw and 70 seconds to guess (Support: `%prefixpictionary drawing`)
 
-        **2.** To draw, you should use MS paint or any simple paint application screenshot it and submit it.
-        For more drawing related tips do %shelp drawing. Normally, each person gets 60 seconds to draw and 70 seconds to guess (Support: `%spictionary drawing`)
-
-        **3.** Each person gets 60s to draw and 70s to guess.
-        You get higher points the faster you get the answer. Note that the scores are built for every game session."""
+3. Each person gets 60s to draw and 70s to guess.
+You get higher points the faster you get the answer. Note that the scores are built for every game session.```"""
 
     """ +-------------------------- Pictionary --------------------------+
         | This is the main cog that the game loop will be written in.    |
@@ -77,7 +77,7 @@ class Pictionary(commands.Cog):
         | start <normal/custom> <rounds> <members>                       |
         +-------------------------- Pictionary --------------------------+ """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
 
         self.bot = bot
 
@@ -361,14 +361,8 @@ class Pictionary(commands.Cog):
     @commands.bot_has_permissions(manage_messages=True)
     @commands.guild_only()
     async def pictionary(self, ctx):
-        embed = discord.Embed(color=discord.Colour.random())
-        embed.set_author(name="Pictionary Manual",
-                         icon_url="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4d6.png")
-        embed.description = Pictionary.__doc__.replace('%s', ctx.prefix)
-        embed.set_thumbnail(
-            url='https://cdn.pixabay.com/photo/2013/04/01/21/30/book-99131_960_720.png')
-        embed.set_footer(text=f"Do {ctx.prefix}pictionary tutorial for a visual help menu")
-        await ctx.reply(embed=embed, mention_author=False)
+        """IGNORE"""
+        await self.bot.call_command("help", ctx, module="pictionary")
 
     @pictionary.command()
     @commands.bot_has_permissions(manage_messages=True)

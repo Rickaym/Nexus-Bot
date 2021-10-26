@@ -29,7 +29,7 @@ class Roulette(commands.Cog):
             title="Roulette",
             color=Color.random(),
         )
-        self.embed.set_author(name="Pictionary' Gamble",
+        self.embed.set_author(name="Nexus' Gamble",
                               icon_url="https://cdn0.iconfinder.com/data/icons/casinos-and-gambling/500/SingleCartoonCasinoAndGamblingYulia_6-512.png")
 
     def create_poster(self, number: int, color: str) -> str:
@@ -103,22 +103,21 @@ class Roulette(commands.Cog):
 
     @commands.group(name="roulette", aliases=["roul"], invoke_without_command=True)
     @commands.guild_only()
-    async def roulette(self, ctx: Context, bet_type: str):
+    async def roulette(self, ctx: Context, bet_type: str=None):
         """
         A game of roulette where a random ball is spun to lay on a random color and a respective number.
         """
+        if bet_type is None:
+            return await ctx.reply(embed=self.help_embed(ctx), mention_author=False)
+
         extras = ''
-        try:
-            int(bet_type)
-        except ValueError as e:
-            pass
-        else:
+        if bet_type.isnumeric():
             if int(bet_type) not in (0, *BLACK, *RED):
                 embed = self.embed.copy()
                 embed.description = f"Your number bet is invalid, it has to be one of `{sorted((0, *BLACK, *RED))}`"
                 await ctx.reply(embed=embed, mention_author=False)
                 return
-            elif int(bet_type) in (0, *BLACK, *RED):
+            else:
                 extras = f"of color {COLORS['red' if int(bet_type) in RED else ('black' if int(bet_type) in BLACK else 'green')]}"
 
         embed = self.embed.copy()
@@ -130,15 +129,10 @@ class Roulette(commands.Cog):
         embed.add_field(
             name="Bet Numbers:", value="> :one: - :three::six:: `35x`\n> Even/Odd: `2x`\n> High/Low: `2x`")
         embed.add_field(name="Result:", value=poster, inline=False)
-        embed.set_footer(text=f"Do {ctx.prefix}roulette help for help")
+        embed.set_footer(text=f"{ctx.prefix}help roulette")
         await ctx.reply(embed=embed, mention_author=False)
 
-    @roulette.command(name="help", aliases=["support"])
-    @commands.guild_only()
-    async def show_help_menu(self, ctx: Context):
-        """
-        A roulette rules and support embed board
-        """
+    def help_embed(self, ctx):
         embed = self.embed.copy()
         embed.description = "A game of roulette! Here are rules for the starter.\n\nJust like any other gambling game, you will win if the ball lands on your bet. Remember that 1 - 18 are low numbers and 19 - 36 are high numbers for probability betting. I.e. if you had your bet on red and if the ball lands on any red squares you win."
         embed.add_field(name="Bet Colors:",
@@ -149,10 +143,7 @@ class Roulette(commands.Cog):
             name="Examples:", value=f"To start a bet, you have to decide the bet type and the bet.\n\n**`{ctx.prefix}roulette red 1000`**\n**`{ctx.prefix}roulette 23 1000`**", inline=False)
         embed.set_footer(
             text=f"Do {ctx.prefix}roulette <bet_type> to start playing")
-
-        #embed.set_thumbnail(url=ROULETTE_BOARD)
-        await ctx.reply(embed=embed, mention_author=False)
-
+        return embed
 
 def setup(bot):
     """Loads the Roulette cog"""

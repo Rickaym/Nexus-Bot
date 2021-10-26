@@ -22,7 +22,7 @@ class DeathRoll(commands.Cog):
             color=discord.Color.random(),
         )
 
-        self.embed.set_author(name="Pictionary' Gamble",
+        self.embed.set_author(name=f"Nexus' Gamble",
                               icon_url="https://cdn0.iconfinder.com/data/icons/casinos-and-gambling/500/SingleCartoonCasinoAndGamblingYulia_6-512.png")
         self.embed.set_footer(
             text=f"To get support • {bot.command_prefix}help deathroll")

@@ -1,9 +1,11 @@
-from os import getenv
 from dotenv import load_dotenv
-from discord import Intents, Status, Game
+from os import getenv
+from discord.ext.commands.context import Context
+from discord.embeds import Embed
+from discord import Intents, Status, Activity, ActivityType
 from discord.ext import commands
 
-from bot.constants import Defaults
+from bot.constants import Defaults, BETA_MODULES, PRIVILEGED_GUILDS, Colour
 from bot.utils.extensions import EXTENSIONS
 from bot.utils.prefixes import get_prefix
 
@@ -14,11 +16,12 @@ intents.members = False # WILL BREAK THINGS
 # Bot constructor
 bot = commands.Bot(command_prefix=get_prefix,
                    intents=intents,
-                   status=Status.offline, activity=Game("Loading.."))
+                   status=Status.online, activity=Activity(type=ActivityType.listening, name=f'STARTING...'))
+
+bot.EXTENSIONS = EXTENSIONS
 
 # On ready event
 bot.remove_command('help')
-
 
 @bot.event
 async def on_ready():
@@ -29,9 +32,29 @@ async def on_ready():
     baseline = '+'+''.join(["-" for i in range(placeholder-4)])+'+'
     print("\n"+baseline+desc+help+baseline)
 
-
 for ext in EXTENSIONS:
     bot.load_extension(ext)
+
+async def call_command(signature, *args, **kwargs):
+    cmd = bot.get_command(signature)
+    that = bot.cogs[cmd.cog_name]
+    await cmd.callback(that, *args, **kwargs)
+
+bot.call_command = call_command
+
+@bot.check
+async def is_beta(ctx: Context):
+    cond = ctx.guild.id in PRIVILEGED_GUILDS or not ctx.command.cog_name.lower() in BETA_MODULES
+    if not cond:
+        await ctx.reply(embed=Embed(title="Slow Down...!", description="This module is in beta-testing! Please join any of the privileged servers to test the module.", color=Colour.EXCEPTION))
+
+    return cond
+
+async def update_status():
+    await bot.wait_until_ready()
+    await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.listening, name=f'~help | {len(bot.guilds)} guilds'))
+
+bot.loop.create_task(update_status())
 
 
 load_dotenv()

@@ -44,7 +44,7 @@ class Marvel:
            "Hulk":"https://i0.wp.com/boldentrance.com/wp-content/uploads/2019/09/hulk-the-avengers.jpg?resize=1170%2C400&ssl=1",
            "Loki":"https://observer.com/wp-content/uploads/sites/2/2020/03/200205-loki.jpg?resize=768,512",
            "Peter Parker":"https://pbs.twimg.com/media/DF903PIUAAEv0Fe?format=jpg&name=large",
-           "Red Skull":"https://i0.wp.com/marvelstudiosnews.com/wp-content/uploads/2018/08/Red-skull-e1533359215896.jpg?resize=696%2C391&quality=80&strip=info&ssl=1",
+           "Gamora":"https://static.wikia.nocookie.net/marvelcinematicuniverse/images/6/61/Gamora_AIW_Profile.jpg/revision/latest/scale-to-width-down/310?cb=20180518212221",
            "Scarlet Witch":"https://img1.looper.com/img/gallery/the-untold-truth-of-the-scarlet-witch/intro-1610729387.jpg",
            "Scott Lang":"https://terrigen-cdn-dev.marvel.com/content/prod/1x/ant-man_two.jpg",
            "Star Lord":"https://static2.cbrimages.com/wordpress/wp-content/uploads/2020/07/star-lord-feature-villain.jpg?q=50&fit=crop&w=960&h=500",

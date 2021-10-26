@@ -64,6 +64,10 @@ TOWNSHIPS = (
 
 
 class Deception(commands.Cog):
+    """
+    What is a lie?...
+    I.. can you really trust anyone - especially those subject to the will of their self interest?..
+    """
     def __init__(self, bot):
         self.bot = bot
 
@@ -121,6 +125,9 @@ class Deception(commands.Cog):
 
     @commands.command(name="kill", aliases=("investigate", "sheriff"))
     async def use_skill(self, ctx: Context):
+        """
+        Use skill.
+        """
         # Check if there is an ongoing game in the guild
         try:
             self.games[ctx.guild.id]
@@ -146,7 +153,8 @@ class Deception(commands.Cog):
 
     @commands.group(name="deception", aliases=("decep", "d"), invoke_without_command=True)
     async def deception(self, ctx: Context):
-        await ctx.reply("oops you can't see this :)", mention_author=False)
+        """IGNORE"""
+        await self.bot.call_command("help", ctx, module="deception")
 
     @deception.command(name="start", aliases=("lobby", "join", "load"))
     @commands.guild_only()
@@ -183,11 +191,14 @@ class Deception(commands.Cog):
                 f"Starting a new local lobby of id ({identifier}) author is {ctx.author.name}#{ctx.author.discriminator}")
             await self.start_local_lobby(ctx, ranks, participants, identifier, mode="start")
 
-    @deception.command(name="help")
-    async def deception_help(self, ctx: Context, doubt: str):
+    @deception.command(name="info")
+    async def deception_help(self, ctx: Context, rank_name: str):
+        """
+        Get more details of a specific rank.
+        """
         ranks = [r.name.lower() for r in all_ranks]
-        if doubt.lower() in ranks:
-            rank = utils.get(object=Rank, name=doubt, id=doubt)
+        if rank_name.lower() in ranks:
+            rank = utils.get(object=Rank, name=rank_name, id=rank_name)
             desc = utils.get_info(rank)
 
             embed = discord.Embed(color=FACTION_COLORS[desc.fac]).set_author(
@@ -404,16 +415,13 @@ class Deception(commands.Cog):
     @commands.command(name="delall")
     @commands.is_owner()
     async def del_all_channels_from_category(self, ctx: Context, id: Greedy[int]):
+        """IGNORE"""
         for i in id:
             category = discord.utils.get(ctx.guild.categories, id=int(i))
             for channel in category.channels:
                 await channel.delete()
                 await asyncio.sleep(1)
             await category.delete()
-
-    @commands.command(name="abc")
-    async def abc(self, ctx, *, abc):
-        print(abc)
 
 
 def setup(bot):

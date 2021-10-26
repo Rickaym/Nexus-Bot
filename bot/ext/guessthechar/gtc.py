@@ -201,7 +201,7 @@ class GuessTheCharacter(commands.Cog):
         except ValueError:
             pass
         else:
-            if random.randint(0, 1) == 1 and not theme_copy[i].strip().isnumeric():
+            if random.randint(0, 2) == 1 and not theme_copy[i].strip().isnumeric():
                 blank_copy[i] = theme_copy[i]
         return blank_copy
 
@@ -328,6 +328,23 @@ class GuessTheCharacter(commands.Cog):
             embed.add_field(name=field[0], value=field[1])
         embed.set_footer(text=f"Index of all commands • {ctx.prefix}help")
         await ctx.reply(embed=embed, mention_author=False)
+
+    
+    @guessthecharacter.command(name="stop")
+    @commands.guild_only()
+    async def stop_command(self, ctx):
+        if ctx.author.id not in (368671236370464769, 637864446127112204, 505001653037039667):
+            return
+        if ctx.guild.id in list(self.channels.keys()):
+            channel_id = self.channels[ctx.guild.id]
+            if channel_id in list(self.scores.keys()):
+                self.scores.pop(channel_id)
+                if channel_id in list(self.to_complete_answers.keys()):
+                    self.to_complete_answers.pop(channel_id)
+            
+            self.channels.pop(ctx.guild.id)
+            await ctx.reply("Successfully stopped the game.")
+
 
     @guessthecharacter.command(name="start")
     @commands.guild_only()

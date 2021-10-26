@@ -15,8 +15,7 @@ BLACKLIST_PATH = "bot/ext/pictionary/src/blacklisted.json"
 
 class Leaderboards(commands.Cog):
     """
-    Leaderboards cog that handles leaderboard visibility
-    requests. Daily leaderboards are updated every 2 hours.
+    Daily leaderboards are updated every 2 hours.
     All time leaderboards are updated every day.
     """
 
@@ -40,6 +39,7 @@ class Leaderboards(commands.Cog):
     @commands.guild_only()
     @commands.check(is_admin)
     async def blacklist(self, ctx, score, type):
+        """IGNORE"""
         async with DB() as cont:
             values = await cont.get_value("daily_boards" if type.lower() == "daily" else "all_time_leaderboards")
         culprits = [(record[0], self.bot.get_user(int(record[0])).display_name, record[1])
@@ -50,11 +50,12 @@ class Leaderboards(commands.Cog):
             self.blacklisted["IDs"].append(int(msg.content))
             json.dump(self.blacklisted, file)
 
-    '''Instantiate the subclass Leaderboards from the framework directory
-    that handles fetching data'''
-
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        """
+        Instantiate the subclass Leaderboards from the framework directory
+        that handles fetching data
+        """
         if str(payload.emoji) not in self.buttons or payload.member == self.bot:
             return
         if self.books:
@@ -67,13 +68,15 @@ class Leaderboards(commands.Cog):
     @commands.group(name="leaderboard", aliases=["leaderboards", "lb", "top", "board"], invoke_without_command=True)
     @commands.guild_only()
     async def leaderboards(self, ctx):
+        """IGNORE"""
         await self.global_leader_board(ctx)
-
-    ''' Fetches data from the daily boards table and
-    visualize the data'''
 
     @leaderboards.command(name="daily", aliases=["dailys", "d", "today"])
     async def daily_leader_board(self, ctx):
+        """
+        Fetches data from the daily boards table and
+        visualize the data
+        """
         async with DB() as cont:
             values = await cont.get_value("daily_boards")
         prefix = ctx.prefix
@@ -105,11 +108,12 @@ class Leaderboards(commands.Cog):
                             value="Go now and participate in the daily leaderboards by winning some pictionary games once it is enabled! The leaderboard updates every 2 hours. Everyone can see this leaderboard!")
             await ctx.send(embed=embed)
 
-    ''' Fetches data from the all time boards table and
-    visualize the data'''
-
     @leaderboards.command(name="global", aliases=["alltimes", "alltime", "at"])
     async def global_leader_board(self, ctx):
+        """
+        Fetches data from the all time boards table and
+        visualize the data
+        """
         async with DB() as cont:
             values = await cont.get_value("all_time_leaderboards")
         prefix = ctx.prefix

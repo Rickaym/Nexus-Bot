@@ -31,6 +31,9 @@ class Colour:
     COLORS = style['light_blue']
     EXCEPTION = style['exception']
 
+SILENT_MODULES = bot["silent_modules"]
+BETA_MODULES = bot["beta_modules"]
+PRIVILEGED_GUILDS = bot["privileged_guilds"]
 
 class Defaults:
     PREFIX = bot['prefix']

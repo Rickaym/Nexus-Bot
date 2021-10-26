@@ -13,7 +13,13 @@ def get_prefix(bot, message):
         return "~"
     elif message.guild is not None:
         with sync_handle_prefixes(Directory.PREFIXES_PTH) as cont:
-            return commands.when_mentioned_or(cont.get_value("prefixes", message.guild.id))(bot, message)
+            prefx = commands.when_mentioned_or(cont.get_value(
+                "prefixes", message.guild.id))(bot, message)
+
+            if prefx[-1] is None:
+                return Defaults.PREFIX
+
+            return prefx
 
 
 async def get_real_prefix(guild_id):
@@ -93,10 +99,10 @@ class PrefixHandler:
         val = (guildID,)
         async with self.db.execute(query, val) as cursor:
             prefix = await cursor.fetchone()
-            if prefix is None:
+            if prefix is None or prefix[0] is None:
                 await self.update_value(table, {guildID: self.base_prefix})
                 return self.base_prefix
-            elif prefix is not None:
+            else:
                 return prefix[0]
 
 

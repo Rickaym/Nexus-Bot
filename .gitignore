@@ -1,5 +1,6 @@
 # HEROKU BACKUP HOSTING
 Procfile
+runtime
 
 # VIRTUAL ENVS AND SENSITIVE DATA
 dependencies

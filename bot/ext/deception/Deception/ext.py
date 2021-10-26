@@ -15,7 +15,7 @@ from typing import Any, Optional, Text, Tuple, Dict, List
 from discord import Member
 
 """
-+---------------------------------------+   
++---------------------------------------+
 |     Deception... Lie?                 |
 |  Who are you..                        |
 |                                       |
@@ -23,9 +23,6 @@ from discord import Member
 |    Could not handle the truth.        |
 |        Should not handle the truth.   |
 +---------------------------------------+
-
-Deception™️ package extensions. Contains all the 
-dataclasses statically typed
 
 Game Info ===============================
 
@@ -65,7 +62,7 @@ Random-ideas
 class actuator:
     """
     Actuator (skill action definitior) that is used to mark skill functions
-    Utilized to mark actions down whenever the function is called to the 
+    Utilized to mark actions down whenever the function is called to the
     game instance it was called upon to be later traced
     """
 
@@ -94,7 +91,7 @@ class actuator:
 @dataclass(repr=True, order=True, frozen=True)
 class Rank:
     """
-    Base class for playable ranks. 
+    Base class for playable ranks.
 
     Attributes
     ---
@@ -180,7 +177,7 @@ class Player:
 @dataclass(repr=True, frozen=True, order=True)
 class Action:
     """
-    Base class for all action, marks down what happens 
+    Base class for all action, marks down what happens
     during the night to evaluate what happens in the morning.
 
     name   : `str`
@@ -208,7 +205,7 @@ class LAN_Game_Instance:
     once the decisions of what roles this game will has the participants
     are made.
 
-    Attribute 
+    Attribute
     ---
     id              : Optional[`int`]
         ID of the game instance for logging purposes
@@ -227,13 +224,13 @@ class LAN_Game_Instance:
     info            : Dict[`str`, Optional[Dict[`Member`, `str`]]]
         Miscellaneous instance information;
             [ranks] - member id : rank
-            [channels] - member id : textchannel 
+            [channels] - member id : textchannel
     day             : `int`
-        The number of days that had passed until now       
+        The number of days that had passed until now
     night           : `int`
-        The number of nights that had passed until now       
+        The number of nights that had passed until now
     alive_count     : `int`
-        The number of players alive now       
+        The number of players alive now
     """
 
     def __init__(self, ctx: Context, members: Tuple[Member], ranks: Tuple[Rank], player_role: Role, id: Optional[int] = 0x666):
@@ -346,7 +343,7 @@ class LAN_Game_Instance:
 
     async def _stop(self, purge: bool = True):
         """
-        Should be called when the game ends. Optional argument purge can be 
+        Should be called when the game ends. Optional argument purge can be
         given false to avoid deleting traces. (for some reason)
         """
         ended = False
@@ -404,8 +401,8 @@ def passive(other: Player): ...
 
 def potency_3_attack(other: Player):
     """
-    Potency 3 attack. Can inflict enough damage to kill any players with less then 
-    a defense value of 2. 
+    Potency 3 attack. Can inflict enough damage to kill any players with less then
+    a defense value of 2.
 
     Can be however prevented by defense 3.
     """
@@ -421,7 +418,7 @@ def potency_3_attack(other: Player):
 
 def _sheriff(other: Player):
     """
-    Sherrif investigation. Can determine if a player has a good moral or a 
+    Sherrif investigation. Can determine if a player has a good moral or a
     bad moral. This can be hindered if the player is framed.
     """
     if not other.rank.moral:
@@ -461,7 +458,7 @@ assassin = Rank(
                  "guide": "We lurk in the shadows for the rigtious brothers bring forth the light.",
                  "skill_message": "Hi... Whom would you like to assassinate tonight %s.",
                  "tips": '''
-+ Assassinate the prime police or thug roles to gain power" 
++ Assassinate the prime police or thug roles to gain power"
 + Constantly under the shadow from investigation
 
 - No defense, inability to assassinate prime roles will put you at stake
@@ -482,7 +479,7 @@ officer = Rank(
 + Pick your investigation properly to uncover prime roles"
 + Ability to find out whether if the target is suspicious or not"
 
-- Weak and defenseless, weak to shadow roles like assasins who does not show up sus" 
+- Weak and defenseless, weak to shadow roles like assasins who does not show up sus"
 - Vulnerable when working along without assistance'''
                  })
 
@@ -497,7 +494,7 @@ FACTION_COLORS = {
 }
 
 if __name__ == '__main__':
-    """ Testing 
+    """ Testing
     from dummy import Member as dummyMember
 
     p1, p2 = dummyMember('player1', random.randint(0, 10000)), dummyMember(
