@@ -1,12 +1,11 @@
 # HEROKU BACKUP HOSTING
 Procfile
-runtime
+runtime.txt
 
 # VIRTUAL ENVS AND SENSITIVE DATA
 dependencies
 venv
 desktop.ini
-runtime.txt
 bot/logs
 bot/utils/marketing.py
 
