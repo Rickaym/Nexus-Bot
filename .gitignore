@@ -5,6 +5,8 @@ runtime
 # VIRTUAL ENVS AND SENSITIVE DATA
 dependencies
 venv
+desktop.ini
+runtime.txt
 bot/logs
 bot/utils/marketing.py
 
