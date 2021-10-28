@@ -34,6 +34,9 @@ class Colour:
 SILENT_MODULES = bot["silent_modules"]
 BETA_MODULES = bot["beta_modules"]
 PRIVILEGED_GUILDS = bot["privileged_guilds"]
+SUPPORT_GUILD = bot["support_guild"]
+SUPPORT_INVITE = bot["support_invite"]
+HOTLINE_CHANNEL = bot["hotline_channel"]
 
 class Defaults:
     PREFIX = bot['prefix']

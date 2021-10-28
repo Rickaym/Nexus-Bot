@@ -367,7 +367,9 @@ You get higher points the faster you get the answer. Note that the scores are bu
     @pictionary.command()
     @commands.bot_has_permissions(manage_messages=True)
     async def start(self, ctx, rounds: int = 1, members: commands.Greedy[discord.Member] = None, draw_time=60, guess_time=70):
-        # Pre-member validation
+        """
+        Starts a match for a game of pictionary.
+        """
         if members is None:
             await ctx.send("⚠️ You didn't specify any participants, please try again.")
             return
@@ -433,6 +435,9 @@ You get higher points the faster you get the answer. Note that the scores are bu
 
     @pictionary.command(name="tutorial")
     async def tutorial(self, ctx):
+        """
+        An interactive guide on using the pictionary features.
+        """
         menu = PictionaryTutorial()
         await menu.start(ctx)
 

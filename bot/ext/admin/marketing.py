@@ -30,6 +30,9 @@ class Marketing(commands.Cog):
         Updating server counts command, this function runs every 30 minutes to
         automatically update your server count.
         """
+        await self.bot.wait_until_ready()
+        if self.bot.user.id == 807283060164919316:
+            return
         guild_count = len(self.bot.guilds)
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -66,13 +69,7 @@ class Marketing(commands.Cog):
             await self.dblpy.post_guild_count()
         except Exception as e:
             print("Failed to post server count\n{}: {}".format(type(e).__name__, e))
-        await self.bot.change_presence(
-            status=discord.Status.online,
-            activity=discord.Activity(
-                type=discord.ActivityType.listening,
-                name=f"~help | {len(self.bot.guilds)} guilds",
-            ),
-        )
+        await self.bot.update_status()
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):

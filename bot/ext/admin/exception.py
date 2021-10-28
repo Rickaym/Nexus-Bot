@@ -50,6 +50,9 @@ class ExceptionHandler(commands.Cog):
         if isinstance(error, ignored):
             return
 
+        elif isinstance(error, commands.CheckFailure):
+            print(error)
+
         elif isinstance(error, commands.DisabledCommand):
             await ctx.send(f'⚠️ {ctx.command} has been disabled.')
 

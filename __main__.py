@@ -5,7 +5,7 @@ from discord.embeds import Embed
 from discord import Intents, Status, Activity, ActivityType
 from discord.ext import commands
 
-from bot.constants import Defaults, BETA_MODULES, PRIVILEGED_GUILDS, Colour
+from bot.constants import Defaults, BETA_MODULES, PRIVILEGED_GUILDS, Colour, SUPPORT_GUILD, HOTLINE_CHANNEL
 from bot.utils.extensions import EXTENSIONS
 from bot.utils.prefixes import get_prefix
 
@@ -16,7 +16,7 @@ intents.members = False # WILL BREAK THINGS
 # Bot constructor
 bot = commands.Bot(command_prefix=get_prefix,
                    intents=intents,
-                   status=Status.online, activity=Activity(type=ActivityType.listening, name=f'STARTING...'))
+                   status=Status.online)
 
 bot.EXTENSIONS = EXTENSIONS
 
@@ -44,7 +44,7 @@ bot.call_command = call_command
 
 @bot.check
 async def is_beta(ctx: Context):
-    cond = ctx.guild.id in PRIVILEGED_GUILDS or not ctx.command.cog_name.lower() in BETA_MODULES
+    cond = ctx.guild is not None and ctx.guild.id in PRIVILEGED_GUILDS or not ctx.command.cog_name.lower() in BETA_MODULES
     if not cond:
         await ctx.reply(embed=Embed(title="Slow Down...!", description="This module is in beta-testing! Please join any of the privileged servers to test the module.", color=Colour.EXCEPTION))
 
@@ -54,7 +54,15 @@ async def update_status():
     await bot.wait_until_ready()
     await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.listening, name=f'~help | {len(bot.guilds)} guilds'))
 
-bot.loop.create_task(update_status())
+async def load_support():
+    await bot.wait_until_ready()
+    bot.support_guild = bot.get_guild(SUPPORT_GUILD)
+    bot.hotline_channel = bot.support_guild.get_channel(HOTLINE_CHANNEL)
+
+bot.update_status = update_status
+
+bot.loop.create_task(bot.update_status())
+bot.loop.create_task(load_support())
 
 
 load_dotenv()

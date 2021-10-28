@@ -4,5 +4,6 @@ pyaml
 python-dotenv
 dnspython
 PyNaCl
+pillow
 dblpy
 git+https://github.com/Rapptz/discord-ext-menus
