@@ -55,6 +55,7 @@ async def update_status():
     await bot.change_presence(status=Status.online, activity=Activity(type=ActivityType.listening, name=f'~help | {len(bot.guilds)} guilds'))
 
 async def load_support():
+    bot.hotline_channel = None
     await bot.wait_until_ready()
     bot.support_guild = bot.get_guild(SUPPORT_GUILD)
     bot.hotline_channel = bot.support_guild.get_channel(HOTLINE_CHANNEL)

@@ -1,10 +1,13 @@
+from io import StringIO
 import traceback
 import logging
 import sys
 
-from discord import Embed, Color, errors, HTTPException
+from discord import Embed, Color, errors, HTTPException, ui
+from discord.components import SelectOption
 from discord.ext import commands
-
+from discord.file import File
+from discord.interactions import Interaction
 from bot.constants import Colour
 
 log = logging.getLogger(__name__)
@@ -14,6 +17,21 @@ file_handler.setFormatter(
     logging.Formatter("[%(asctime)s][%(name)s]: %(message)s"))
 log.addHandler(file_handler)
 
+class HandleException(ui.Select):
+    def __init__(self, view: ui.View):
+        options = (
+            SelectOption(label="Report to admins", emoji="❗"),
+            SelectOption(label="Delete", emoji="🗑️")
+        )
+        self._from_view = view
+        self.report = False
+        super().__init__(placeholder="Handle Exception", options=options)
+
+    async def callback(self, i: Interaction):
+        if "Report to admins" in i.data["values"]:
+            await i.response.send_message("Done, thanks for reporting.")
+            self.report = True
+        self._from_view.stop()
 
 class ExceptionHandler(commands.Cog):
     """Basic discord exception handler"""
@@ -24,10 +42,19 @@ class ExceptionHandler(commands.Cog):
         self.error_color = Colour.EXCEPTION
 
     async def raise_norm(self, ctx, error):
-        print(f'Ignoring exception in command {ctx.command}:')
         report = ''.join(traceback.format_exception(
             type(error), error, error.__traceback__))
+        view = ui.View()
+        select = HandleException(view)
+        view.add_item(select)
+        m = await ctx.send("<a:stresswarning:845304431289303071> Something went wrong...", view=view)
+        await view.wait()
+        await m.delete()
+        if select.report:
+            buf = StringIO(report)
+            await self.bot.hotline_channel.send(file=File(buf, "report.log"), content=f"Reported by {ctx.author.name}#{ctx.author.discriminator} @here")
 
+        print(f'Ignoring exception in command {ctx.command}:')
         log.critical(report)
         traceback.print_exception(
             type(error), error, error.__traceback__, file=sys.stderr)

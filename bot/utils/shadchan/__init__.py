@@ -1,19 +1,31 @@
 import asyncio
+import inspect
 
 from asyncio.events import AbstractEventLoop
-import inspect
+from collections import namedtuple
+from uuid import uuid4
+from random import choice
 from typing import Any, Callable, Dict, List
+from dataclasses import dataclass
+from discord.embeds import Embed
+from discord import ui
+from discord.enums import ButtonStyle
+from discord.interactions import Interaction
 from discord.member import Member
 from discord.ext.commands.context import Context
+from bot.utils.hearsay import Hearsay
 
 SERVICES: Dict[str, "Pool"] = {}
 
-class MatchStatus:
-    IDLE = 0x1
-    ONGOING = 0x2
+MatchStatus = namedtuple('int', ["IDLE", "ONGOING"])(0x10DE, 0x36)
+MatchModes = namedtuple('int', ["singleplayer", "gvg", "lan", "unknown"])(0x1, 0x2, 0x3, 0x4)
 
 
 class Bridge:
+    """
+    A temporary context object that creates a unique space inside a dictionary
+    with an init value, then supplies it to the needed function
+    """
     def __init__(self, otk, board, init) -> None:
         self.otk = otk
         self.init = init
@@ -31,37 +43,108 @@ class Bridge:
             pass
 
 
+@dataclass
+class Player:
+    user: Member
+    ctx: Context
+    callback: Callable
+
+
+@dataclass
+class MatchOptions:
+    mode: MatchModes
+    self_pair: bool = False
+    parallel: bool = False
+
+
+class MatchmakerUI(ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.mode = None
+
+    @ui.button(label="SINGLEPLAYER", emoji="🏠", style=ButtonStyle.blurple)
+    async def singleplayer(self, button, i: Interaction):
+        self.mode = MatchModes.singleplayer
+        self.stop()
+
+    @ui.button(label="MULTIPLAYER", emoji="🏟️", style=ButtonStyle.green)
+    async def multiplayer(self, button, i: Interaction):
+        self.mode = MatchModes.gvg
+        self.stop()
+
+    @ui.button(emoji="❌", style=ButtonStyle.grey)
+    async def cancel(self, button, i: Interaction):
+        await i.response.send_message("Cancelled")
+        self.stop()
+
+
 class MatchInstance:
-    def __init__(self, pool, loop: AbstractEventLoop, player1: Member, ctx: Context, callback: Callable) -> None:
+    def __init__(self, pool, loop: AbstractEventLoop, player1: Member, ctx: Context, callback: Callable, mode: MatchModes) -> None:
         self.pool = pool
         self.loop = loop
         self.status = MatchStatus.IDLE
+        self.options = MatchOptions(mode)
+        self.id = choice(str(uuid4()).split('-'))
 
-        self.context = {
-            "p1": {"member": player1,
-                   "ctx": ctx,
-                   "callback": callback},
-            "p2": {"member": None,
-                   "ctx": None,
-                   "callback": None},
-            }
+        self.p1 = Player(player1, ctx, callback)
+        self.p2 = None
+
         self.signals = {}
-        self.handshook = None
         self._roughboard = {}
 
-    def register_signal(self, name):
+    def includes(self, user: Member):
+        """
+        Check whether if a user is included in this matchup.
+        """
+        return user.id != self.p1.user.id and not self.options.mode == MatchModes.singleplayer and user.id != self.p1.user.id
+
+    def _register_signal(self, name):
         if name not in self.signals.keys():
             self.signals[name] = []
 
-    def on_emit(self, signal_name, callback):
-        self.signals[signal_name].append(callback)
+    def on_emit(self, signal_name, callback: Callable=None):
+        """
+        Assign an incoming signal to a callback.
+        """
+        self._register_signal(signal_name)
+        if callback is None:
+            def wrapper(callback: Callable):
+                self.signals[signal_name].append(callback)
+                return callback
+            return wrapper
+        else:
+            self.signals[signal_name].append(callback)
 
-    async def emit(self, signal_name, *args, **kwargs):
+    def emit(self, signal_name, *args, **kwargs):
+        """
+        Emits a signal and create tasks for the callbacks.
+        """
+        try:
+            self.signals[signal_name]
+        except KeyError:
+            raise KeyError("You can't emit a signal that hasn't been waited for.")
         for cb in self.signals[signal_name]:
             if inspect.iscoroutinefunction(cb):
                 self.loop.create_task(cb(*args, **kwargs))
             else:
                 self.loop.create_task(self._invoke(cb, *args, **kwargs))
+
+    async def emit_wait_for(self, signal_name, *args, **kwargs):
+        """
+        Emits a signal and waits until the callbacks for both parties are received.
+        Meaning it will wait for the other side of callbacks as well.
+        """
+        try:
+            self.signals[signal_name]
+        except KeyError:
+            raise KeyError("You can't emit a signal that hasn't been waited for.")
+
+        for cb in self.signals[signal_name]:
+            if inspect.iscoroutinefunction(cb):
+                await cb(*args, **kwargs)
+            else:
+                await self.loop.run_in_executor(None, cb, *args, **kwargs)
+        await self.wait_other()
 
     async def _puppet_async(self): ...
 
@@ -72,7 +155,7 @@ class MatchInstance:
         """
         def wrapper(func: Callable):
             def wrapped(this: "MatchInstance", *args, **kwargs):
-                if this.context["p2"]["member"] is None:
+                if this.options.mode == MatchModes.singleplayer:
                     if coro:
                         return this._puppet_async()
                     else:
@@ -88,16 +171,16 @@ class MatchInstance:
         """
         if len(node) == 0:
             node.append("p1")
-            target = "p1"
-            send_to = "p2"
+            target = self.p1
+            send_to = self.p2
         else:
-            target = "p2"
-            send_to = "p1"
+            target = self.p2
+            send_to = self.p1
 
         while True:
-            m = await bot.wait_for("message", check=lambda m: m.author.id == self.context[target]["member"].id and m.channel.id == self.context[target]["ctx"].channel.id)
+            m = await bot.wait_for("message", check=lambda m: m.author.id == target.user.id and m.channel.id == target.ctx.channel.id)
 
-            await self.context[send_to]["ctx"].send(f"{m.author.name}#{m.author.discriminator}: {m.content}")
+            await send_to.ctx.channel.send(f"{Hearsay.resolve_name(m.author)}: {m.content}")
 
     def _generalize(self, value, node):
         node.append(value)
@@ -111,7 +194,7 @@ class MatchInstance:
         value. It can be used to generalize a game setting that needs to be decided
         between two player ends.
         """
-        if self.context["p2"]["member"] is None:
+        if self.options.mode == MatchModes.singleplayer:
             return value
         else:
             with Bridge("__generalize__", self._roughboard, []) as node:
@@ -123,23 +206,28 @@ class MatchInstance:
         Establish an echo bridge betwen two players in a multiplayer
         game for a given amount of time.
         """
-        with Bridge("__estab__", self._roughboard, []) as node:
-            try:
-                await asyncio.wait_for(self._establish_msg_relay(bot, node), time, loop=self.loop)
-            except asyncio.exceptions.TimeoutError:
-                pass
+        if self.options.mode == MatchModes.gvg:
+            with Bridge("__estab__", self._roughboard, []) as node:
+                try:
+                    await asyncio.wait_for(self._establish_msg_relay(bot, node), time, loop=self.loop)
+                except asyncio.exceptions.TimeoutError:
+                    pass
 
     async def _invoke(self, callback, *args, **kwargs):
         """
-        Simple asynchronous wrapper for a synchronous function.
+        Simply an asynchronous wrapper for tasks.
+        ONLY USE THIS WHEN CREATING TASKS - NOTHING ELSE.
+        IT IS CAPABLE OF BLOCKING.
         """
         return callback(*args, **kwargs)
 
     def _engage(self):
-        for p in self.context.keys():
-            if self.context[p]["member"] is not None:
-                self.loop.create_task(self._invoke(self.context[p]["callback"],
-                                    self.context[p]["member"], self.context[p]["ctx"], self))
+        if self.p1 is not None:
+            self.loop.create_task(self._invoke(self.p1.callback,
+                                self.p1.user, self.p1.ctx, self))
+        if self.options.mode != MatchModes.singleplayer:
+            self.loop.create_task(self._invoke(self.p2.callback,
+                                self.p2.user, self.p2.ctx, self))
 
     def pair(self, player=None, ctx=None, callback=None):
         """
@@ -147,9 +235,7 @@ class MatchInstance:
         """
         if self.status != MatchStatus.ONGOING:
             self.status = MatchStatus.ONGOING
-            self.context["p2"] = {"member": player,
-                                  "ctx": ctx,
-                                  "callback": callback}
+            self.p2 = Player(player, ctx, callback)
             self._engage()
 
     def _conclude(self, score: Any, by: Callable, node: list):
@@ -163,7 +249,7 @@ class MatchInstance:
         """
         Conclude a judgement between two players with a comparing function.
         """
-        if self.context["p2"]["member"] is None:
+        if self.options.mode == MatchModes.singleplayer:
             cond = True
         else:
             with Bridge("__con_answer__", self._roughboard, []) as node:
@@ -175,7 +261,7 @@ class MatchInstance:
         Conclude a judgement between two players with a comparing function and returns the other
         player's submitted value.
         """
-        if self.context["p2"]["member"] is None:
+        if self.options.mode == MatchModes.singleplayer:
             cond = True
             other = score
         else:
@@ -192,22 +278,19 @@ class MatchInstance:
         """
         self.pool._conclude(self)
 
-    def _handshake(self):
+    def _catchup(self, node):
+        node.append(None)
         while True:
-            if self.handshook is True:
+            if len(node) >= 2:
                 break
-            if self.handshook is None:
-                self.handshook = False
-            elif self.handshook is False:
-                self.handshook = True
 
     @_ignore_on_sp()
     async def wait_other(self):
         """
         Synchronizes playing parties.
         """
-        await asyncio.wait_for(self.loop.run_in_executor(None, self._handshake), 60, loop=self.loop)
-        self.handshook = None
+        with Bridge("wait_other", self._roughboard, []) as node:
+            await asyncio.wait_for(self.loop.run_in_executor(None, self._catchup, node), 60, loop=self.loop)
 
 
 class Pool:
@@ -215,19 +298,59 @@ class Pool:
         self.nm = service_name
         self.puddle: List[MatchInstance] = []
 
-    def lineup(self, player: Member, ctx: Context, loop: AbstractEventLoop, on_matchup: Callable) -> MatchInstance:
-        match = self._reharse(player, ctx, loop, on_matchup)
+    def _get_sp_match_count(self):
+        return len([m for m in self.puddle if m.options.mode == MatchModes.singleplayer and m.status == MatchStatus.ONGOING])
+
+    async def _get_matchmode(self, ctx: Context):
+        view = MatchmakerUI()
+
+        embed = Embed(color=0x1cc7d4)
+        embed.set_author(name="SHADCHAN ➖ WELCOME TO THE MATCHMAKER")
+        embed.add_field(name="Gamemode",
+                        value=f"🧖 **[SINGLEPLAYER](https://google.com/ \"CAMPAIGN MODE\")**\n<:onl:903016826450112542> {self._get_sp_match_count()} Ongoing"
+                               "\n➖ Start Campaign by pressing single player"
+                               "\n<:channel:845286257344643103> This channel is open to games.")
+        embed.add_field(name="\u200b",
+                        value=f"⚔️ **[MULTIPLAYER](https://google.com/ \"PVP MODE\")**\n<:onl:903016826450112542> {self._get_sp_match_count()} Ongoing"
+                               "\n➖ 1v1 Global Server Scope"
+                               "\n⚔️ You will be matched against a random player.")
+        m = await ctx.send(embed=embed, view=view)
+        await view.wait()
+        for i in view.children:
+            i.disabled = True
+        if view.mode is not None:
+            embed.set_author(name=f"SHADCHAN ➖ STARTING {'SINGLEPLAYER' if view.mode == MatchModes.singleplayer else 'MULTIPLAYER'}")
+            await m.edit(embed=embed, view=view, delete_after=2)
+        return view.mode
+
+    async def lineup(self, player: Member, ctx: Context, loop: AbstractEventLoop, on_matchup: Callable, mode: MatchModes) -> MatchInstance:
+        if mode == MatchModes.unknown:
+            mode = await self._get_matchmode(ctx)
+        if mode is None:
+            return
+        match = self._reharse(player, ctx, loop, on_matchup, mode)
         return match
 
-    def _reharse(self, player, ctx, loop, callback):
+    def _get_match(self, player):
         for match in self.puddle:
-            if match.status != MatchStatus.ONGOING:
-                match.pair(player, ctx, callback)
+            if match.status != MatchStatus.ONGOING and match.p1.user.id != player.id:
                 return match
-        else:
-            new_match = MatchInstance(self, loop, player, ctx, callback)
+
+    def _reharse(self, player, ctx, loop, callback, mode):
+        if mode == MatchModes.singleplayer:
+            new_match = MatchInstance(self, loop, player, ctx, callback, mode)
             self.puddle.append(new_match)
+            new_match.pair()
             return new_match
+        elif mode == MatchModes.gvg:
+            pending_match = self._get_match(player)
+            if pending_match is not None:
+                pending_match.pair(player, ctx, callback)
+                return pending_match
+            else:
+                new_match = MatchInstance(self, loop, player, ctx, callback, mode)
+                self.puddle.append(new_match)
+                return new_match
 
     def _conclude(self, match: MatchInstance):
         try:

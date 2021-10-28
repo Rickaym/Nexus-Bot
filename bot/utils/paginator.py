@@ -4,7 +4,6 @@ import datetime
 
 
 class Paginator:
-
     def __init__(self, buttons, timeout=40) -> None:
         self.backward, self.forward, self.delete = buttons
         self.pages = []

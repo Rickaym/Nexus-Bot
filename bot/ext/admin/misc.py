@@ -2,15 +2,16 @@ import discord
 
 from io import StringIO
 from discord.embeds import Embed
-from discord.errors import Forbidden, HTTPException
+from discord.errors import Forbidden
 from discord.ext.commands import Context
 from discord.ext import commands
 from datetime import datetime
 
-from discord.message import Message, MessageReference
+from discord.message import Message
 from discord.raw_models import RawReactionActionEvent
 
 from bot.constants import SUPPORT_INVITE, Colour, SILENT_MODULES, BETA_MODULES, Defaults
+from bot.utils.hearsay import Hearsay
 from bot.utils.prefixes import PrefixHandler, get_real_prefix
 from random import randint, choice
 
@@ -165,7 +166,8 @@ class Misc(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def report_hotline(self, message: Message):
-        if message.channel.id == self.bot.hotline_channel.id and message.author.id in Defaults.ADMINS:
+        if (self.bot.hotline_channel is not None
+            and message.channel.id == self.bot.hotline_channel.id and message.author.id in Defaults.ADMINS):
             if message.reference:
                 ref = message.reference.cached_message or self.bot.hotline_channel.get_message(message.reference.id)
                 if len(ref.embeds) != 0 and ref.embeds[0].author.name.isnumeric():
@@ -173,7 +175,7 @@ class Misc(commands.Cog):
                     if usr is None:
                         return await message.reply("Target user wasn't found when attempted fetching.")
                     try:
-                        m = await usr.send(f"**{message.author.name}** <:dev:903040958109737022>: {message.content}")
+                        m = await usr.send(f"**{Hearsay.resolve_name(message.author)}: {message.content}")
                     except Forbidden:
                         return await message.reply("Couldn't message the target user.")
                     else:

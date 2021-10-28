@@ -1,5 +1,3 @@
-import dbl
-import discord
 import aiohttp
 
 from dotenv import load_dotenv
@@ -16,8 +14,6 @@ class Marketing(commands.Cog):
         self.DISBOTSGG = getenv("DISBOTSGG")
         self.MOTIONDEV = getenv("MOTIONDEV")
         self.DBLAPIKEY = getenv("DBLAPIKEY")
-
-        self.dblpy = dbl.DBLClient(self.bot, self.DBLTOKEN)
 
         self.bot.loop.create_task(self.post_server.callback(self))
 
@@ -46,7 +42,7 @@ class Marketing(commands.Cog):
                 if ctx:
                     await ctx.send(f"DiscordBotsGG: {r.status} {await r.text()}")
             async with session.post(
-                "https://www.motiondevelopment.top/api/bots/768442873561481216/stats",
+                "https://www.motiondevelopment.top/api/v1.2/bots/768442873561481216/stats",
                 json={"guilds": guild_count},
                 headers={"content-type": "application/json", "key": self.MOTIONDEV},
             ) as r:
@@ -65,10 +61,15 @@ class Marketing(commands.Cog):
             ) as r:
                 if ctx:
                     await ctx.send(f"DiscordBotList: {r.status} {await r.text()}")
-        try:
-            await self.dblpy.post_guild_count()
-        except Exception as e:
-            print("Failed to post server count\n{}: {}".format(type(e).__name__, e))
+            async with session.post(
+                "https://top.gg/api/bots/768442873561481216/stats",
+                json={
+                    "server_count": guild_count},
+                headers={
+                    "Authorization": self.DBLTOKEN
+                }) as r:
+                if ctx:
+                    await ctx.send(f"Top GG: {r.status} {await r.text()}")
         await self.bot.update_status()
 
     @commands.Cog.listener()
