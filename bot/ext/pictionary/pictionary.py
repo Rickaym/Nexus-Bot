@@ -5,11 +5,8 @@ import random
 from json import load
 from datetime import datetime
 from discord.ext import commands, tasks
-from discord.ext.commands.core import Command
 
 from bot.constants import Colour
-from bot.utils.checks import is_admin
-from bot.utils.paginator import Paginator
 
 from .src.database import DB
 from .src.anti_abuse import AntiAbuse

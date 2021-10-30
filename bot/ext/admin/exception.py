@@ -1,9 +1,9 @@
-from io import StringIO
 import traceback
 import logging
 import sys
 
 from discord import Embed, Color, errors, HTTPException, ui
+from io import StringIO
 from discord.components import SelectOption
 from discord.ext import commands
 from discord.file import File
@@ -44,6 +44,12 @@ class ExceptionHandler(commands.Cog):
     async def raise_norm(self, ctx, error):
         report = ''.join(traceback.format_exception(
             type(error), error, error.__traceback__))
+
+        print(f'Ignoring exception in command {ctx.command}:')
+        log.critical(report)
+        traceback.print_exception(
+            type(error), error, error.__traceback__, file=sys.stderr)
+
         view = ui.View()
         select = HandleException(view)
         view.add_item(select)
@@ -53,11 +59,6 @@ class ExceptionHandler(commands.Cog):
         if select.report:
             buf = StringIO(report)
             await self.bot.hotline_channel.send(file=File(buf, "report.log"), content=f"Reported by {ctx.author.name}#{ctx.author.discriminator} @here")
-
-        print(f'Ignoring exception in command {ctx.command}:')
-        log.critical(report)
-        traceback.print_exception(
-            type(error), error, error.__traceback__, file=sys.stderr)
 
     def get_usage(self, ctx):
         return f'{ctx.prefix}{ctx.command.qualified_name} {ctx.command.signature}'

@@ -3,8 +3,6 @@ import asyncio
 
 from discord.ext import commands
 
-from bot.constants import Colour
-
 PLAYER_MAP = {'🔴': 1, '🔵': 0}
 PLAYER_1 = '🔴'
 PLAYER_2 = '🔵'

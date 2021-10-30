@@ -6,14 +6,14 @@ from discord.errors import Forbidden
 from discord.ext.commands import Context
 from discord.ext import commands
 from datetime import datetime
-
 from discord.message import Message
+from random import randint, choice
 from discord.raw_models import RawReactionActionEvent
 
-from bot.constants import SUPPORT_INVITE, Colour, SILENT_MODULES, BETA_MODULES, Defaults
 from bot.utils.hearsay import Hearsay
 from bot.utils.prefixes import PrefixHandler, get_real_prefix
-from random import randint, choice
+from bot.constants import (SUPPORT_INVITE, Colour, BADGED_MODULES,
+                          SILENT_MODULES, BETA_MODULES, Defaults)
 
 HELP_ICONS = {"gamble": '🎰', "pictionary":'🖌️',
                 "speedgames": '🎡', "tabletop": "🏓",
@@ -46,30 +46,33 @@ class Misc(commands.Cog):
             report += f"{HELP_ICONS.get(fn, HELP_ICONS['default'])} **[{fn.title()}](https://github.com/Rickaym/Nexus-Bot/tree/main/bot/ext/{fn}/README.md \"{ctx.prefix}help {fn}\")**" + (' 🇧' if fn.lower() in BETA_MODULES else '')
             for pce in cog:
                 if pce.lower() not in [m.lower() for m in SILENT_MODULES]:
-                    report += f"\n• {pce}"
+                    report += f"\n• {pce}{(f' ' + BADGED_MODULES.get(pce, '')).replace(',', ' ', -1)}"
             report += '\n'
             if report.count('\n') >= 5:
                 field_group.append(["\u200b", report.strip() + '\n'])
                 report = ""
             report += '\n'
 
-        if report:
+        if report.strip():
             field_group.append(["\u200b", report.strip() + '\n'])
         field_group.sort(key=lambda i: i[1].count('\n'), reverse=True)
-
-        # decorative lines
-        for grp in field_group:
-            while grp[1].count('\n') <= 9:
-                decor = list("\n⬛⬛⬛⬛⬛")
-                decor[randint(1, 5)] = choice((f"||[{choice(('🟥', '🟫', '🟧', '🟨', '⬜', '🟪', '🟩', '🟦', '🏞️'))}](https://youtu.be/9UHstqfSNJc \"You're safe.. but not for long!\")||", "||[💣](https://youtu.be/dQw4w9WgXcQ \"BOOM You're dead!\")||"))
-                grp[1] += ''.join(decor)
+        # sadly this needs to be removed for mobile
+        # optimization
+        if False:
+            # decorative lines
+            for grp in field_group:
+                while grp[1].count('\n') <= 9:
+                    decor = list("\n⬛⬛⬛⬛⬛")
+                    decor[randint(1, 5)] = choice((f"||[{choice(('🟥', '🟫', '🟧', '🟨', '⬜', '🟪', '🟩', '🟦', '🏞️'))}](https://youtu.be/9UHstqfSNJc \"You're safe.. but not for long!\")||", "||[💣](https://youtu.be/dQw4w9WgXcQ \"BOOM You're dead!\")||"))
+                    grp[1] += ''.join(decor)
 
         # irritate the progression
         tmp = field_group[1]
         field_group[1] = field_group[-1]
         field_group[-1] = tmp
         for i, f in enumerate(field_group):
-            embed.add_field(name="Games" if i == 0 else f[0], value=f[1])
+            if f[1]:
+                embed.add_field(name="Games" if i == 0 else f[0], value=f[1])
         embed.add_field(name="🗞️ News", value=f"```diff\n+ Try out the new multi-player speed typing competition with {ctx.prefix}typing race. Enjoy the thrill. More games will be introduced to multiplayer.\n\n\n- Support at {ctx.prefix}support```")
         embed.add_field(name="🌅 A New Chapter .. .", value="```⁣          🎈    ☁️   "
                                                         "\n         🎈🎈🎈      "
@@ -169,13 +172,13 @@ class Misc(commands.Cog):
         if (self.bot.hotline_channel is not None
             and message.channel.id == self.bot.hotline_channel.id and message.author.id in Defaults.ADMINS):
             if message.reference:
-                ref = message.reference.cached_message or self.bot.hotline_channel.get_message(message.reference.id)
+                ref = message.reference.cached_message or (await self.bot.hotline_channel.fetch_message(message.reference.message_id))
                 if len(ref.embeds) != 0 and ref.embeds[0].author.name.isnumeric():
                     usr = await self.bot.fetch_user(int(ref.embeds[0].author.name))
                     if usr is None:
                         return await message.reply("Target user wasn't found when attempted fetching.")
                     try:
-                        m = await usr.send(f"**{Hearsay.resolve_name(message.author)}: {message.content}")
+                        m = await usr.send(f"{await Hearsay.resolve_name(message.author)}: {message.content}")
                     except Forbidden:
                         return await message.reply("Couldn't message the target user.")
                     else:
@@ -210,7 +213,7 @@ class Misc(commands.Cog):
         """
         Report for abuse or get hotline support - only through DMs.
         """
-        await self.bot.hotline_channel.send(embed=Embed(description=incident, timestamp=datetime.utcnow()).set_footer(text=f"{ctx.author.name}#{ctx.author.discriminator}").set_author(name=str(ctx.author.id), icon_url=ctx.author.avatar_url))
+        await self.bot.hotline_channel.send(embed=Embed(description=incident, timestamp=datetime.utcnow()).set_footer(text=f"{ctx.author.name}#{ctx.author.discriminator}").set_author(name=str(ctx.author.id)))
 
     @prefix.command()
     @commands.guild_only()

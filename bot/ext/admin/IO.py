@@ -1,5 +1,3 @@
-import logging
-
 from discord.ext import commands
 from discord.ext.commands.context import Context
 
@@ -12,7 +10,7 @@ class AdminIO(commands.Cog):
         self.bot = bot
         self.extension_state = []
 
-    @commands.command(name="load", aliases=['ld'])
+    @commands.command(name="load", aliases=('ld',))
     @commands.check(is_admin)
     async def load_cog(self, ctx: Context, extension: str):
         """Loads a unloaded cog to the bot."""
@@ -25,7 +23,7 @@ class AdminIO(commands.Cog):
                 return
         await ctx.message.add_reaction("❎")
 
-    @commands.command(name="unload", aliases=['ul'])
+    @commands.command(name="unload", aliases=('ul',))
     @commands.check(is_admin)
     async def unload_cog(self, ctx: Context, extension: str):
         """Unloads an loaded cog to the bot."""
@@ -38,7 +36,7 @@ class AdminIO(commands.Cog):
                 return
         await ctx.message.add_reaction("❎")
 
-    @commands.command(name="reload", aliases=['rl'])
+    @commands.command(name="reload", aliases=('rl',))
     @commands.check(is_admin)
     async def reload_cog(self, ctx: Context, extension: str):
         """
@@ -53,7 +51,7 @@ class AdminIO(commands.Cog):
                 return
         await ctx.message.add_reaction("❎")
 
-    @commands.command(name="restart", aliases=['rst', 'sync'])
+    @commands.command(name="restart", aliases=('rst', 'sync'))
     @commands.check(is_admin)
     async def restart(self, ctx: Context):
         """

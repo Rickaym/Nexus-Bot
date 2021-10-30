@@ -1,5 +1,4 @@
-import aiohttp
-
+from aiohttp import ClientSession
 from dotenv import load_dotenv
 from os import getenv
 from discord.ext import commands
@@ -30,7 +29,7 @@ class Marketing(commands.Cog):
         if self.bot.user.id == 807283060164919316:
             return
         guild_count = len(self.bot.guilds)
-        async with aiohttp.ClientSession() as session:
+        async with ClientSession() as session:
             async with session.post(
                 "https://discord.bots.gg/api/v1/bots/768442873561481216/stats",
                 json={"guildCount": guild_count},

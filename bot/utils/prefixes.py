@@ -1,11 +1,9 @@
-import discord
 import sqlite3
 import aiosqlite
 
 from discord.ext import commands
 
-from bot.constants import Defaults
-from bot.constants import Colour, Directory
+from bot.constants import Defaults, Directory
 
 
 def get_prefix(bot, message):

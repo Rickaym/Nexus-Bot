@@ -2,7 +2,7 @@ from yaml import load, SafeLoader
 
 CONFIG_PATH = 'config.yaml'
 
-with open(CONFIG_PATH, 'r') as file:
+with open(CONFIG_PATH, 'r', encoding="utf-8") as file:
     _CONFIGURATION = load(file, Loader=SafeLoader)
 
 _DIRECTIONS = _CONFIGURATION['directory']
@@ -15,6 +15,7 @@ class Directory:
 style = _CONFIGURATION['style']
 dir = _CONFIGURATION['directory']
 bot = _CONFIGURATION['bot']
+help_decor = _CONFIGURATION["help_decorations"]
 
 # NUMBER MAP
 NUMBER_MAP = {'0': ':zero:', '1': ':one:', '2': ':two:', '3': ':three:',
@@ -31,8 +32,9 @@ class Colour:
     COLORS = style['light_blue']
     EXCEPTION = style['exception']
 
-SILENT_MODULES = bot["silent_modules"]
-BETA_MODULES = bot["beta_modules"]
+SILENT_MODULES = help_decor["silent_modules"]
+BETA_MODULES = help_decor["beta_modules"]
+BADGED_MODULES = help_decor["badged_modules"]
 PRIVILEGED_GUILDS = bot["privileged_guilds"]
 SUPPORT_GUILD = bot["support_guild"]
 SUPPORT_INVITE = bot["support_invite"]
