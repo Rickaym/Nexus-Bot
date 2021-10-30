@@ -17,19 +17,26 @@ class Hearsay:
                 res = await cur.fetchone()
         if res is not None:
             nickname, badges = res
-            badges = badges.replace(',', ' ', -1)
+            badges = badges.replace(",", " ", -1)
             if format_ is None:
                 return f"*{nickname}* {badges}"
             else:
                 return format_.replace("%name", nickname).replace("%badges", badges)
         else:
-            return (f"{user.name}#{user.discriminator}" if format_ is None else
-                    format_.replace("%name", f"{user.name}#{user.discriminator}").replace("%badges", ""))
+            return (
+                f"{user.name}#{user.discriminator}"
+                if format_ is None
+                else format_.replace(
+                    "%name", f"{user.name}#{user.discriminator}"
+                ).replace("%badges", "")
+            )
 
     @staticmethod
     async def resolve_asset(user, asset_id):
         async with aiosqlite_connect(Hearsay.db_path) as db:
-            async with db.execute(f"SELECT {asset_id} FROM {Hearsay.tablename} WHERE user_id = {user.id}") as cur:
+            async with db.execute(
+                f"SELECT {asset_id} FROM {Hearsay.tablename} WHERE user_id = {user.id}"
+            ) as cur:
                 try:
                     return (await cur.fetchone())[0]
                 except (IndexError, TypeError):

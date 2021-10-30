@@ -11,8 +11,9 @@ def get_prefix(bot, message):
         return "~"
     elif message.guild is not None:
         with sync_handle_prefixes(Directory.PREFIXES_PTH) as cont:
-            prefx = commands.when_mentioned_or(cont.get_value(
-                "prefixes", message.guild.id))(bot, message)
+            prefx = commands.when_mentioned_or(
+                cont.get_value("prefixes", message.guild.id)
+            )(bot, message)
 
             if prefx[-1] is None:
                 return Defaults.PREFIX
@@ -104,7 +105,7 @@ class PrefixHandler:
                 return prefix[0]
 
 
-'''
+"""
 return
 async for entry in guild.audit_logs(action=discord.AuditLogAction.bot_add):
     if entry.target == self.bot.user:
@@ -121,4 +122,4 @@ async for entry in guild.audit_logs(action=discord.AuditLogAction.bot_add):
         inviter = entry.user
         await inviter.send(embed=embed)
         return
-'''
+"""
